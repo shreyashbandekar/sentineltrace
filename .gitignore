@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# Pytest
+.pytest_cache/
+
+# Generated audit data
+baseline/*.json
+baseline/*.sha256
+snapshots/*.json
+reports/*.json
+reports/*.txt
+logs/*
+
+# Local/generated files
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Temporary backups
+main_backup_*.py
