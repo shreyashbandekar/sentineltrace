@@ -33,7 +33,11 @@ ConvertTo-Json -Compress
     )
 
     if result.returncode != 0:
-        raise RuntimeError(result.stderr.strip())
+        error = result.stderr.strip() or result.stdout.strip()
+        raise RuntimeError(
+            f"PowerShell software collection failed "
+            f"(exit code {result.returncode}): {error}"
+        )
 
     output = result.stdout.strip()
 
