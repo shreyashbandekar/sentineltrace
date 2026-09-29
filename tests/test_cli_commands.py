@@ -9,13 +9,44 @@ from cli.commands import (
 )
 
 
-def test_get_status():
+def test_get_status(tmp_path, monkeypatch):
+    import cli.commands as commands
+
+    baseline_dir = tmp_path / "baseline"
+    snapshots_dir = tmp_path / "snapshots"
+    reports_dir = tmp_path / "reports"
+
+    baseline_dir.mkdir()
+    snapshots_dir.mkdir()
+    reports_dir.mkdir()
+
+    baseline_file = baseline_dir / "baseline.json"
+    hash_file = baseline_dir / "baseline.sha256"
+
+    baseline_file.write_text("{}", encoding="utf-8")
+    hash_file.write_text("test-hash", encoding="utf-8")
+
+    (snapshots_dir / "snapshot_test.json").write_text(
+        "{}",
+        encoding="utf-8",
+    )
+
+    (reports_dir / "report_test.json").write_text(
+        "{}",
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(commands, "BASELINE_FILE", baseline_file)
+    monkeypatch.setattr(commands, "BASELINE_HASH_FILE", hash_file)
+    monkeypatch.setattr(commands, "SNAPSHOTS_DIR", snapshots_dir)
+    monkeypatch.setattr(commands, "REPORTS_DIR", reports_dir)
+
     result = get_status()
 
     assert result["baseline_exists"] is True
     assert result["hash_exists"] is True
-    assert result["snapshot_count"] >= 1
-    assert result["report_count"] >= 1
+    assert result["snapshot_count"] == 1
+    assert result["report_count"] == 1
 
 
 
@@ -26,6 +57,37 @@ def test_create_snapshot(tmp_path, monkeypatch):
         commands,
         "SNAPSHOTS_DIR",
         tmp_path,
+    )
+
+    monkeypatch.setattr(
+        commands,
+        "collect_all",
+        lambda: {
+            "system_info": {},
+            "accounts": {
+                "users": [],
+                "administrators": [],
+            },
+            "services": [],
+            "software": [],
+            "network": {
+                "adapters": [],
+                "ip_configuration": [],
+                "tcp_connections": [],
+            },
+            "security": {},
+            "startup": {
+                "registry_startup": [],
+                "startup_folders": [],
+                "boot_logon_scheduled_tasks": [],
+            },
+            "scheduled_tasks": {
+                "tasks": [],
+            },
+            "drivers": {
+                "drivers": [],
+            },
+        },
     )
 
     timestamp = "20990101_120000"
@@ -47,7 +109,24 @@ def test_create_snapshot(tmp_path, monkeypatch):
     assert "drivers" in snapshot
 
 
-def test_create_baseline_refuses_overwrite():
+
+
+def test_create_baseline_refuses_overwrite(tmp_path, monkeypatch):
+    import cli.commands as commands
+
+    baseline_file = tmp_path / "baseline.json"
+
+    baseline_file.write_text(
+        "{}",
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(
+        commands,
+        "BASELINE_FILE",
+        baseline_file,
+    )
+
     result = create_baseline()
 
     assert result["success"] is False
