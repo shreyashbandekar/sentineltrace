@@ -126,8 +126,10 @@ def compare_with_baseline(snapshot, timestamp_value):
         removed += len(section.get("removed", []))
         modified += len(section.get("modified", []))
         unchanged += len(section.get("unchanged", []))
+    audit_id = f"AUDIT-{timestamp_value.replace('_', '-')}"
 
     report = {
+        "audit_id": audit_id,
         "generated_at": timestamp_value,
         "summary": {
             "added": added,
