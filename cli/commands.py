@@ -128,9 +128,19 @@ def compare_with_baseline(snapshot, timestamp_value):
         unchanged += len(section.get("unchanged", []))
     audit_id = f"AUDIT-{timestamp_value.replace('_', '-')}"
 
+    system_info = snapshot.get("system_info", {})
+
     report = {
         "audit_id": audit_id,
         "generated_at": timestamp_value,
+        "metadata": {
+            "computer_name": system_info.get("computer_name"),
+            "username": system_info.get("username"),
+            "operating_system": system_info.get("operating_system"),
+            "os_release": system_info.get("os_release"),
+            "os_version": system_info.get("os_version"),
+            "architecture": system_info.get("architecture"),
+        },
         "summary": {
             "added": added,
             "removed": removed,

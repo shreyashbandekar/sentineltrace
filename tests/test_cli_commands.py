@@ -178,6 +178,14 @@ def test_compare_with_baseline(tmp_path, monkeypatch):
     }
 
     current = {
+        "system_info": {
+            "computer_name": "TEST-PC",
+            "username": "test-user",
+            "operating_system": "Windows",
+            "os_release": "11",
+            "os_version": "10.0.26200",
+            "architecture": "AMD64",
+        },
         "accounts": {
             "users": [],
             "administrators": [],
