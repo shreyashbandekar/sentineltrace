@@ -1,8 +1,78 @@
-from audit.collector import collect_all
+import audit.collector as collector
 
 
-def test_collect_all():
-    result = collect_all()
+def test_collect_all(monkeypatch):
+    monkeypatch.setattr(
+        collector,
+        "collect_system_info",
+        lambda: {"hostname": "TEST-HOST"},
+    )
+
+    monkeypatch.setattr(
+        collector,
+        "collect_accounts",
+        lambda: {
+            "users": [],
+            "administrators": [],
+        },
+    )
+
+    monkeypatch.setattr(
+        collector,
+        "collect_services",
+        lambda: [],
+    )
+
+    monkeypatch.setattr(
+        collector,
+        "collect_software",
+        lambda: [],
+    )
+
+    monkeypatch.setattr(
+        collector,
+        "collect_network",
+        lambda: {
+            "adapters": [],
+            "ip_configuration": [],
+            "tcp_connections": [],
+        },
+    )
+
+    monkeypatch.setattr(
+        collector,
+        "collect_security",
+        lambda: {},
+    )
+
+    monkeypatch.setattr(
+        collector,
+        "collect_startup",
+        lambda: {
+            "registry_startup": [],
+            "startup_folders": [],
+            "boot_logon_scheduled_tasks": [],
+        },
+    )
+
+    monkeypatch.setattr(
+        collector,
+        "collect_tasks",
+        lambda: {
+            "tasks": [],
+        },
+    )
+
+    monkeypatch.setattr(
+        collector,
+        "collect_drivers",
+        lambda: {
+            "driver_count": 0,
+            "drivers": [],
+        },
+    )
+
+    result = collector.collect_all()
 
     assert isinstance(result, dict)
 
