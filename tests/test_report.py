@@ -3,7 +3,16 @@ from audit.report import format_report, generate_text_report
 
 def test_formats_report_summary():
     report = {
+        "audit_id": "AUDIT-20260925-120000",
         "generated_at": "20260925_120000",
+        "metadata": {
+            "computer_name": "TEST-PC",
+            "username": "test-user",
+            "operating_system": "Windows",
+            "os_release": "11",
+            "os_version": "10.0.26200",
+            "architecture": "AMD64",
+        },
         "summary": {
             "added": 2,
             "removed": 1,
@@ -55,7 +64,13 @@ def test_formats_report_summary():
 
     output = format_report(report)
 
-    assert "LAPTOP SERVICE AUDIT REPORT" in output
+    assert "SENTINELTRACE AUDIT REPORT" in output
+    assert "Audit ID   : AUDIT-20260925-120000" in output
+    assert "Computer Name : TEST-PC" in output
+    assert "Username      : test-user" in output
+    assert "Operating Sys.: Windows" in output
+    assert "OS Version    : 11 (10.0.26200)" in output
+    assert "Architecture  : AMD64" in output
     assert "COMPARISON SUMMARY" in output
     assert "Added      : 2" in output
     assert "Removed    : 1" in output
@@ -187,7 +202,7 @@ def test_generate_text_report(tmp_path):
 
     output = generate_text_report(report_file)
 
-    assert "LAPTOP SERVICE AUDIT REPORT" in output
+    assert "SENTINELTRACE AUDIT REPORT" in output
     assert "TestService" in output
     assert "BEFORE: Stopped" in output
     assert "AFTER : Running" in output

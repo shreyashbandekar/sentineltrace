@@ -203,12 +203,43 @@ def format_report(report):
     lines = []
 
     lines.append("=" * 70)
-    lines.append("LAPTOP SERVICE AUDIT REPORT")
+    lines.append("SENTINELTRACE AUDIT REPORT")
     lines.append("=" * 70)
     lines.append("")
 
     lines.append(
-        f"Generated : {report.get('generated_at', 'Unknown')}"
+        f"Audit ID   : {report.get('audit_id', 'Unknown')}"
+    )
+
+    lines.append(
+        f"Generated  : {report.get('generated_at', 'Unknown')}"
+    )
+
+    metadata = report.get("metadata", {})
+
+    lines.append("")
+    lines.append("ENDPOINT INFORMATION")
+    lines.append("-" * 70)
+
+    lines.append(
+        f"Computer Name : {metadata.get('computer_name', 'Unknown')}"
+    )
+
+    lines.append(
+        f"Username      : {metadata.get('username', 'Unknown')}"
+    )
+
+    lines.append(
+        f"Operating Sys.: {metadata.get('operating_system', 'Unknown')}"
+    )
+
+    lines.append(
+        f"OS Version    : {metadata.get('os_release', 'Unknown')} "
+        f"({metadata.get('os_version', 'Unknown')})"
+    )
+
+    lines.append(
+        f"Architecture  : {metadata.get('architecture', 'Unknown')}"
     )
 
     lines.append("")
