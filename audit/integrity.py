@@ -42,6 +42,14 @@ def verify_file_hash(file_path, expected_hash):
 
     return actual_hash.lower() == expected_hash.strip().lower()
 
+def write_file_hash(file_path, hash_file_path):
+    """Calculate a file SHA-256 hash and write it to a hash file."""
+    file_hash = calculate_file_hash(file_path)
+
+    hash_path = Path(hash_file_path)
+    hash_path.write_text(file_hash, encoding="utf-8")
+
+    return file_hash
 
 if __name__ == "__main__":
     print("Integrity module: OK")

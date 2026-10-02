@@ -33,7 +33,7 @@ def run_full_audit():
     print_info("Collecting current system state...")
     print_info("Please wait...")
 
-    snapshot, snapshot_file = create_snapshot(timestamp())
+    snapshot, snapshot_file, snapshot_hash = create_snapshot(timestamp())
 
     print_success("Snapshot created.")
     print_success(f"Saved to: {snapshot_file}")

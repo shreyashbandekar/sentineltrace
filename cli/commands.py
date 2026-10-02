@@ -2,7 +2,7 @@ from pathlib import Path
 
 from audit.collector import collect_all
 from audit.compare import compare_snapshots
-from audit.integrity import calculate_hash
+from audit.integrity import calculate_hash, write_file_hash
 from audit.investigation import investigate_changes
 from audit.report import format_report
 
@@ -86,7 +86,16 @@ def create_snapshot(timestamp_value):
             default=str,
         )
 
-    return snapshot, snapshot_file
+    snapshot_hash_file = Path(
+        f"{snapshot_file}.sha256"
+    )
+
+    snapshot_hash = write_file_hash(
+        snapshot_file,
+        snapshot_hash_file,
+    )
+
+    return snapshot, snapshot_file, snapshot_hash
 
 
 def compare_with_baseline(snapshot, timestamp_value):
@@ -186,13 +195,35 @@ def compare_with_baseline(snapshot, timestamp_value):
         encoding="utf-8",
     )
 
+    report_hash_file = Path(
+        f"{report_file}.sha256"
+    )
+
+    text_report_hash_file = Path(
+        f"{text_report_file}.sha256"
+    )
+
+    report_hash = write_file_hash(
+        report_file,
+        report_hash_file,
+    )
+
+    text_report_hash = write_file_hash(
+        text_report_file,
+        text_report_hash_file,
+    )
+
     return {
         "success": True,
         "summary": report["summary"],
         "comparison": comparison,
         "report_file": str(report_file),
+        "report_hash": report_hash,
+        "report_hash_file": str(report_hash_file),
         "text_report_file": str(text_report_file),
-    }
+        "text_report_hash": text_report_hash,
+        "text_report_hash_file": str(text_report_hash_file),
+}
 
 
 def verify_baseline():

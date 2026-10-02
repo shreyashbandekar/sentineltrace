@@ -1,44 +1,84 @@
-from audit.integrity import calculate_hash
+from pathlib import Path
+
+from audit.integrity import (
+    calculate_hash,
+    calculate_file_hash,
+    verify_file_hash,
+)
 
 
-def test_same_data_produces_same_hash():
+def test_calculate_hash_is_deterministic():
     data = {
-        "username": "shrey",
-        "status": "active",
+        "name": "SentinelTrace",
+        "version": 1,
     }
 
-    hash_one = calculate_hash(data)
-    hash_two = calculate_hash(data)
+    first_hash = calculate_hash(data)
+    second_hash = calculate_hash(data)
 
-    assert hash_one == hash_two
+    assert first_hash == second_hash
+    assert len(first_hash) == 64
 
 
-def test_different_data_produces_different_hash():
-    data_one = {
-        "username": "shrey",
-        "status": "active",
+def test_calculate_hash_is_order_independent():
+    first = {
+        "name": "SentinelTrace",
+        "version": 1,
     }
 
-    data_two = {
-        "username": "shrey",
-        "status": "disabled",
+    second = {
+        "version": 1,
+        "name": "SentinelTrace",
     }
 
-    hash_one = calculate_hash(data_one)
-    hash_two = calculate_hash(data_two)
-
-    assert hash_one != hash_two
+    assert calculate_hash(first) == calculate_hash(second)
 
 
-def test_hash_is_sha256_format():
-    data = {
-        "test": "value",
-    }
+def test_calculate_file_hash(tmp_path):
+    test_file = Path(tmp_path) / "test.txt"
+    test_file.write_text("SentinelTrace integrity test", encoding="utf-8")
 
-    result = calculate_hash(data)
+    file_hash = calculate_file_hash(test_file)
 
-    assert len(result) == 64
-    assert all(
-        character in "0123456789abcdef"
-        for character in result
+    assert len(file_hash) == 64
+
+
+def test_verify_file_hash(tmp_path):
+    test_file = Path(tmp_path) / "test.txt"
+    test_file.write_text("SentinelTrace integrity test", encoding="utf-8")
+
+    expected_hash = calculate_file_hash(test_file)
+
+    assert verify_file_hash(test_file, expected_hash) is True
+
+
+def test_verify_file_hash_detects_tampering(tmp_path):
+    test_file = Path(tmp_path) / "test.txt"
+    test_file.write_text("Original content", encoding="utf-8")
+
+    expected_hash = calculate_file_hash(test_file)
+
+    test_file.write_text("Modified content", encoding="utf-8")
+
+    assert verify_file_hash(test_file, expected_hash) is False
+
+def test_write_file_hash(tmp_path):
+    test_file = Path(tmp_path) / "test.txt"
+    hash_file = Path(tmp_path) / "test.txt.sha256"
+
+    test_file.write_text(
+        "SentinelTrace integrity test",
+        encoding="utf-8",
     )
+
+    from audit.integrity import write_file_hash
+
+    returned_hash = write_file_hash(
+        test_file,
+        hash_file,
+    )
+
+    assert hash_file.exists()
+    assert len(returned_hash) == 64
+    assert hash_file.read_text(encoding="utf-8") == returned_hash
+    assert verify_file_hash(test_file, returned_hash) is True

@@ -92,7 +92,10 @@ def test_create_snapshot(tmp_path, monkeypatch):
 
     timestamp = "20990101_120000"
 
-    snapshot, snapshot_file = create_snapshot(timestamp)
+    snapshot, snapshot_file,  snapshot_hash = create_snapshot(timestamp)
+    snapshot_hash_file = Path(
+        f"{snapshot_file}.sha256"
+    )
 
     assert snapshot_file.exists()
     assert snapshot_file.name == "snapshot_20990101_120000.json"
@@ -255,6 +258,24 @@ def test_compare_with_baseline(tmp_path, monkeypatch):
 
     assert Path(result["report_file"]).exists()
     assert Path(result["text_report_file"]).exists()
+    report_hash_file = Path(result["report_hash_file"])
+    text_report_hash_file = Path(result["text_report_hash_file"])
+
+    assert report_hash_file.exists()
+    assert text_report_hash_file.exists()
+
+    assert len(result["report_hash"]) == 64
+    assert len(result["text_report_hash"]) == 64
+
+    assert (
+        report_hash_file.read_text(encoding="utf-8").strip()
+        == result["report_hash"]
+    )
+
+    assert (
+        text_report_hash_file.read_text(encoding="utf-8").strip()
+        == result["text_report_hash"]
+    )
 
 
 def test_compare_without_baseline(tmp_path, monkeypatch):
