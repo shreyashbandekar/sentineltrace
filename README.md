@@ -515,7 +515,7 @@ SentinelTrace includes an automated test suite covering the core auditing compon
 Current result:
 
 ```text
-36 passed
+50 passed
 ```
 
 Test coverage includes:
@@ -544,7 +544,7 @@ Run the test suite with:
 python -m pytest
 ```
 
-The test suite currently contains **36 passing tests**.
+The test suite currently contains **50 passing tests**.
 
 Some tests perform real Windows endpoint collection, so execution time can be significantly longer than pure unit tests.
 
@@ -916,7 +916,7 @@ Planned future improvements may include:
 | JSON reports | Complete |
 | Text reports | Complete |
 | Interactive CLI | Complete |
-| Automated tests | 36/36 passing |
+| Automated tests | 50/50 passing |
 | Git repository | Initialized |
 | Advanced detection | Planned |
 | CI automation | Planned |
