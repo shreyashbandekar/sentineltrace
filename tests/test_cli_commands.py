@@ -483,3 +483,75 @@ def test_get_verifiable_evidence_files(tmp_path, monkeypatch):
     result = get_verifiable_evidence_files()
 
     assert result == [verified_snapshot]
+
+def test_get_verifiable_report_files(tmp_path, monkeypatch):
+    from cli.commands import get_verifiable_report_files
+
+    monkeypatch.setattr(
+        "cli.commands.REPORTS_DIR",
+        tmp_path,
+    )
+
+    verified_report = tmp_path / "report_20261002_120000.json"
+    unverified_report = tmp_path / "report_20261001_120000.json"
+
+    verified_report.write_text("{}", encoding="utf-8")
+    unverified_report.write_text("{}", encoding="utf-8")
+
+    verified_hash = Path(f"{verified_report}.sha256")
+    verified_hash.write_text(
+        "a" * 64,
+        encoding="utf-8",
+    )
+
+    result = get_verifiable_report_files()
+
+    assert result == [verified_report]
+
+def test_verify_report(tmp_path):
+    from cli.commands import verify_report
+    from audit.integrity import write_file_hash
+
+    report_file = tmp_path / "report_20261002_120000.json"
+
+    report_file.write_text(
+        '{"status": "complete"}',
+        encoding="utf-8",
+    )
+
+    hash_file = Path(f"{report_file}.sha256")
+    expected_hash = write_file_hash(
+        report_file,
+        hash_file,
+    )
+
+    result = verify_report(report_file)
+
+    assert result["success"] is True
+    assert result["file"] == str(report_file)
+    assert result["expected_hash"] == expected_hash
+    assert result["actual_hash"] == expected_hash
+    assert result["hash_file"] == str(hash_file)
+
+def test_verify_report_detects_tampering(tmp_path):
+    import cli.commands as commands
+    from audit.integrity import write_file_hash
+    report_file = tmp_path / "report_test.json"
+    hash_file = tmp_path / "report_test.json.sha256"
+
+    report_file.write_text(
+        '{"status": "original"}',
+        encoding="utf-8",
+    )
+
+    write_file_hash(report_file, hash_file)
+
+    report_file.write_text(
+        '{"status": "tampered"}',
+        encoding="utf-8",
+    )
+
+    result = commands.verify_report(report_file)
+
+    assert result["success"] is False
+    assert result["actual_hash"] != result["expected_hash"]

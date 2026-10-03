@@ -121,6 +121,50 @@ def get_verifiable_evidence_files():
         if Path(f"{evidence_file}.sha256").exists()
     ]
 
+def get_verifiable_report_files():
+    """Return JSON report files that have SHA-256 hash files."""
+
+    if not REPORTS_DIR.exists():
+        return []
+
+    return sorted(
+        report_file
+        for report_file in REPORTS_DIR.glob("report_*.json")
+        if Path(f"{report_file}.sha256").exists()
+    )
+
+def verify_report(report_file):
+    """Verify a JSON report against its accompanying SHA-256 hash."""
+
+    report_path = Path(report_file)
+    hash_file = Path(f"{report_path}.sha256")
+
+    if not report_path.exists():
+        return {
+            "success": False,
+            "file": str(report_path),
+            "error": "Report file does not exist.",
+        }
+
+    if not hash_file.exists():
+        return {
+            "success": False,
+            "file": str(report_path),
+            "hash_file": str(hash_file),
+            "error": "Report hash file does not exist.",
+        }
+
+    expected_hash = hash_file.read_text(encoding="utf-8").strip()
+    actual_hash = calculate_file_hash(report_path)
+
+    return {
+        "success": verify_file_hash(report_path, expected_hash),
+        "file": str(report_path),
+        "expected_hash": expected_hash,
+        "actual_hash": actual_hash,
+        "hash_file": str(hash_file),
+    }
+
 def verify_evidence(evidence_file):
     """Verify an evidence file against its accompanying SHA-256 hash."""
     evidence_path = Path(evidence_file)
