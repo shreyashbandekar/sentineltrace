@@ -2,7 +2,12 @@ from pathlib import Path
 
 from audit.collector import collect_all
 from audit.compare import compare_snapshots
-from audit.integrity import calculate_hash, write_file_hash
+from audit.integrity import (
+    calculate_file_hash,
+    calculate_hash,
+    verify_file_hash,
+    write_file_hash,
+)
 from audit.investigation import investigate_changes
 from audit.report import format_report
 
@@ -97,6 +102,55 @@ def create_snapshot(timestamp_value):
 
     return snapshot, snapshot_file, snapshot_hash
 
+def get_evidence_files():
+    """Return available snapshot evidence files in sorted order."""
+
+    if not SNAPSHOTS_DIR.exists():
+        return []
+
+    return sorted(
+        SNAPSHOTS_DIR.glob("snapshot_*.json")
+    )
+
+def get_verifiable_evidence_files():
+    """Return snapshot evidence files that have SHA-256 hash files."""
+
+    return [
+        evidence_file
+        for evidence_file in get_evidence_files()
+        if Path(f"{evidence_file}.sha256").exists()
+    ]
+
+def verify_evidence(evidence_file):
+    """Verify an evidence file against its accompanying SHA-256 hash."""
+    evidence_path = Path(evidence_file)
+    hash_file = Path(f"{evidence_path}.sha256")
+
+    if not evidence_path.exists():
+        return {
+            "success": False,
+            "file": str(evidence_path),
+            "error": "Evidence file does not exist.",
+        }
+
+    if not hash_file.exists():
+        return {
+            "success": False,
+            "file": str(evidence_path),
+            "hash_file": str(hash_file),
+            "error": "Evidence hash file does not exist.",
+        }
+
+    expected_hash = hash_file.read_text(encoding="utf-8").strip()
+    actual_hash = calculate_file_hash(evidence_path)
+
+    return {
+        "success": verify_file_hash(evidence_path, expected_hash),
+        "file": str(evidence_path),
+        "expected_hash": expected_hash,
+        "actual_hash": actual_hash,
+        "hash_file": str(hash_file),
+    }
 
 def compare_with_baseline(snapshot, timestamp_value):
     """Compare a snapshot against the official baseline."""

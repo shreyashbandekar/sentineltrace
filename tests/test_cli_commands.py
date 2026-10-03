@@ -392,3 +392,94 @@ def test_verify_baseline_missing_hash(
 
     assert result["success"] is False
     assert result["message"] == "Baseline hash does not exist."
+
+def test_verify_evidence(tmp_path, monkeypatch):
+    from cli.commands import verify_evidence
+
+    evidence_file = tmp_path / "evidence.json"
+    evidence_file.write_text('{"test": "data"}', encoding="utf-8")
+
+    hash_file = Path(f"{evidence_file}.sha256")
+
+    from audit.integrity import write_file_hash
+
+    expected_hash = write_file_hash(evidence_file, hash_file)
+
+    result = verify_evidence(evidence_file)
+
+    assert result["success"] is True
+    assert result["file"] == str(evidence_file)
+    assert result["expected_hash"] == expected_hash
+    assert result["actual_hash"] == expected_hash
+    assert result["hash_file"] == str(hash_file)
+
+def test_verify_evidence_detects_tampering(tmp_path):
+    from cli.commands import verify_evidence
+    from audit.integrity import write_file_hash
+
+    evidence_file = tmp_path / "evidence.json"
+    evidence_file.write_text(
+        '{"status": "original"}',
+        encoding="utf-8",
+    )
+
+    hash_file = Path(f"{evidence_file}.sha256")
+    write_file_hash(evidence_file, hash_file)
+
+    # Tamper with the evidence after its hash was created.
+    evidence_file.write_text(
+        '{"status": "tampered"}',
+        encoding="utf-8",
+    )
+
+    result = verify_evidence(evidence_file)
+
+    assert result["success"] is False
+    assert result["expected_hash"] != result["actual_hash"]
+
+def test_get_evidence_files(tmp_path, monkeypatch):
+    from cli.commands import get_evidence_files
+
+    monkeypatch.setattr(
+        "cli.commands.SNAPSHOTS_DIR",
+        tmp_path,
+    )
+
+    snapshot_1 = tmp_path / "snapshot_20261001_120000.json"
+    snapshot_2 = tmp_path / "snapshot_20261002_120000.json"
+    ignored_file = tmp_path / "notes.txt"
+
+    snapshot_1.write_text("{}", encoding="utf-8")
+    snapshot_2.write_text("{}", encoding="utf-8")
+    ignored_file.write_text("ignore", encoding="utf-8")
+
+    result = get_evidence_files()
+
+    assert result == [
+        snapshot_1,
+        snapshot_2,
+    ]
+
+def test_get_verifiable_evidence_files(tmp_path, monkeypatch):
+    from cli.commands import get_verifiable_evidence_files
+
+    monkeypatch.setattr(
+        "cli.commands.SNAPSHOTS_DIR",
+        tmp_path,
+    )
+
+    verified_snapshot = tmp_path / "snapshot_20261002_120000.json"
+    unverified_snapshot = tmp_path / "snapshot_20261001_120000.json"
+
+    verified_snapshot.write_text("{}", encoding="utf-8")
+    unverified_snapshot.write_text("{}", encoding="utf-8")
+
+    verified_hash = Path(f"{verified_snapshot}.sha256")
+    verified_hash.write_text(
+        "a" * 64,
+        encoding="utf-8",
+    )
+
+    result = get_verifiable_evidence_files()
+
+    assert result == [verified_snapshot]

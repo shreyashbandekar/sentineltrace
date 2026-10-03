@@ -5,9 +5,11 @@ from .commands import (
     create_baseline,
     create_snapshot,
     ensure_directories,
+    get_verifiable_evidence_files,
     get_latest_report,
     get_status,
     verify_baseline,
+    verify_evidence,
 )
 from .display import (
     print_error,
@@ -83,7 +85,7 @@ def handle_snapshot():
     print_info("Collecting current system state...")
     print_info("Please wait...")
 
-    _, snapshot_file = create_snapshot(timestamp())
+    _, snapshot_file, _ = create_snapshot(timestamp())
 
     print_success("Snapshot created.")
     print_success(f"Saved to: {snapshot_file}")
@@ -115,13 +117,63 @@ def handle_verify():
     else:
         print_error("Baseline integrity FAILED.")
 
+def handle_verify_evidence():
+    """Handle evidence file integrity verification."""
+
+    evidence_files = get_verifiable_evidence_files()
+
+    if not evidence_files:
+        print_warning("No evidence files found.")
+        return
+
+    print_header("SELECT EVIDENCE FILE")
+
+    for index, evidence_file in enumerate(evidence_files, start=1):
+        print(f"{index}. {evidence_file}")
+
+    print()
+
+    while True:
+        choice = input(
+            f"Select an evidence file [1-{len(evidence_files)}]: "
+        ).strip()
+
+        if choice.isdigit():
+            index = int(choice)
+
+            if 1 <= index <= len(evidence_files):
+                evidence_file = evidence_files[index - 1]
+                break
+
+        print_error(
+            f"Invalid option. Please select a number from 1 to {len(evidence_files)}."
+        )
+
+    result = verify_evidence(evidence_file)
+
+    if not result["success"] and "actual_hash" not in result:
+        print_warning(result["error"])
+        return
+
+    print_header("EVIDENCE INTEGRITY")
+
+    print(f"File     : {result['file']}")
+    print(f"Hash File: {result['hash_file']}")
+    print(f"Expected : {result['expected_hash']}")
+    print(f"Actual   : {result['actual_hash']}")
+    print()
+
+    if result["success"]:
+        print_success("Evidence integrity verified.")
+    else:
+        print_error("Evidence integrity FAILED.")
 
 def handle_status():
     """Display audit project status."""
 
     status = get_status()
 
-    print_header("LAPTOP SERVICE AUDIT STATUS")
+    print_header("SENTINELTRACE STATUS")
 
     print(
         f"Baseline : "
@@ -242,7 +294,7 @@ def show_changes():
 def show_menu():
     """Display the main interactive menu."""
 
-    print_header("LAPTOP SERVICE AUDIT")
+    print_header("SENTINELTRACE")
 
     print("1. Compare Changes")
     print("2. What Are the Changes?")
@@ -250,9 +302,10 @@ def show_menu():
     print("4. Create Snapshot")
     print("5. Create Baseline")
     print("6. Verify Baseline Integrity")
-    print("7. View Audit Status")
-    print("8. View Latest Report")
-    print("9. Exit")
+    print("7. Verify Evidence Integrity")
+    print("8. View Audit Status")
+    print("9. View Latest Report")
+    print("10. Exit")
 
     print_separator()
 
@@ -261,13 +314,13 @@ def get_choice():
     """Get and validate the user's menu selection."""
 
     while True:
-        choice = input("Select an option [1-9]: ").strip()
+        choice = input("Select an option [1-10]: ").strip()
 
-        if choice in {str(number) for number in range(1, 10)}:
+        if choice in {str(number) for number in range(1, 11)}:
             return choice
 
         print_error(
-            "Invalid option. Please select a number from 1 to 9."
+            "Invalid option. Please select a number from 1 to 10."
         )
 
 
@@ -302,9 +355,12 @@ def main_menu():
             handle_verify()
 
         elif choice == "7":
-            handle_status()
+            handle_verify_evidence()
 
         elif choice == "8":
+            handle_status()
+
+        elif choice == "9":
             result = get_latest_report()
 
             if result is None:
@@ -327,8 +383,8 @@ def main_menu():
                 print(f"Modified   : {summary.get('modified', 0)}")
                 print(f"Unchanged  : {summary.get('unchanged', 0)}")
 
-        elif choice == "9":
-            print_success("Exiting Laptop Service Audit.")
+        elif choice == "10":
+            print_success("Exiting SentinelTrace.")
             break
 
         print()
