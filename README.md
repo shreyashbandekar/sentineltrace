@@ -323,6 +323,41 @@ The integrity module provides functionality for:
 This helps detect unexpected modification of the baseline file.
 
 ---
+### Evidence Integrity
+
+Every generated snapshot is accompanied by a SHA-256 hash file.
+
+SentinelTrace can independently verify snapshot evidence to detect unexpected modification or corruption after collection.
+
+```text
+Snapshot JSON
+     │
+     ├── SHA-256 hash
+     │
+     ▼
+Evidence Integrity Verification
+     │
+     ├── Hash matches → Verified
+     └── Hash differs → FAILED
+
+```
+### Report Integrity
+
+Every generated JSON audit report is accompanied by a SHA-256 hash file.
+
+SentinelTrace can independently verify report integrity to detect unexpected modification or corruption after the report is generated.
+
+```text
+Report JSON
+     │
+     ├── SHA-256 hash
+     │
+     ▼
+Report Integrity Verification
+     │
+     ├── Hash matches → Verified
+     └── Hash differs → FAILED
+```
 
 # Audit Reports
 
@@ -416,6 +451,21 @@ python main.py verify
 
 Verifies the integrity of the stored baseline.
 
+### Verify Evidence Integrity
+
+```powershell
+python main.py verify-evidence
+```
+Verifies the integrity of generated snapshot evidence using its SHA-256 hash.
+
+### Verify Report Integrity
+
+```powershell
+python main.py verify-report
+```
+
+Verifies the integrity of generated audit reports using their SHA-256 hash.
+
 ### View Status
 
 ```powershell
@@ -447,9 +497,11 @@ opens the interactive menu.
 4. Create Snapshot
 5. Create Baseline
 6. Verify Baseline Integrity
-7. View Audit Status
-8. View Latest Report
-9. Exit
+7. Verify Evidence Integrity
+8. Verify Report Integrity
+9. View Audit Status
+10. View Latest Report
+11. Exit
 ```
 
 The interactive interface provides a simple way to operate the audit system without remembering individual commands.
@@ -821,18 +873,20 @@ Context is important.
 
 ## Phase 6 — CLI
 
-- [x] Direct commands
+- [x] Direct CLI commands
 - [x] Interactive menu
 - [x] Status command
-- [x] Baseline verification
+- [x] Baseline integrity verification
+- [x] Evidence integrity verification
+- [x] Report integrity verification
 - [x] Report viewing
 
 ## Phase 7 — Testing
 
 - [x] Automated test suite
-- [x] 36/36 tests passing
-- [ ] Expand Windows integration coverage
-- [ ] Add CI automation
+- [x] 50/50 tests passing
+- [x] Windows integration coverage
+- [x] GitHub Actions CI
 
 ## Phase 8 — Future Security Features
 
