@@ -6,10 +6,12 @@ from .commands import (
     create_snapshot,
     ensure_directories,
     get_verifiable_evidence_files,
+    get_verifiable_report_files,
     get_latest_report,
     get_status,
     verify_baseline,
     verify_evidence,
+    verify_report,
 )
 from .display import (
     print_error,
@@ -168,6 +170,57 @@ def handle_verify_evidence():
     else:
         print_error("Evidence integrity FAILED.")
 
+def handle_verify_report():
+    """Handle report file integrity verification."""
+
+    report_files = get_verifiable_report_files()
+
+    if not report_files:
+        print_warning("No report files found.")
+        return
+
+    print_header("SELECT REPORT FILE")
+
+    for index, report_file in enumerate(report_files, start=1):
+        print(f"{index}. {report_file}")
+
+    print()
+
+    while True:
+        choice = input(
+            f"Select a report file [1-{len(report_files)}]: "
+        ).strip()
+
+        if choice.isdigit():
+            index = int(choice)
+
+            if 1 <= index <= len(report_files):
+                report_file = report_files[index - 1]
+                break
+
+        print_error(
+            f"Invalid option. Please select a number from 1 to {len(report_files)}."
+        )
+
+    result = verify_report(report_file)
+
+    if not result["success"] and "actual_hash" not in result:
+        print_warning(result["error"])
+        return
+
+    print_header("REPORT INTEGRITY")
+
+    print(f"File     : {result['file']}")
+    print(f"Hash File: {result['hash_file']}")
+    print(f"Expected : {result['expected_hash']}")
+    print(f"Actual   : {result['actual_hash']}")
+    print()
+
+    if result["success"]:
+        print_success("Report integrity verified.")
+    else:
+        print_error("Report integrity FAILED.")
+
 def handle_status():
     """Display audit project status."""
 
@@ -303,9 +356,10 @@ def show_menu():
     print("5. Create Baseline")
     print("6. Verify Baseline Integrity")
     print("7. Verify Evidence Integrity")
-    print("8. View Audit Status")
-    print("9. View Latest Report")
-    print("10. Exit")
+    print("8. Verify Report Integrity")
+    print("9. View Audit Status")
+    print("10. View Latest Report")
+    print("11. Exit")
 
     print_separator()
 
@@ -314,13 +368,13 @@ def get_choice():
     """Get and validate the user's menu selection."""
 
     while True:
-        choice = input("Select an option [1-10]: ").strip()
+        choice = input("Select an option [1-11]: ").strip()
 
-        if choice in {str(number) for number in range(1, 11)}:
+        if choice in {str(number) for number in range(1, 12)}:
             return choice
 
         print_error(
-            "Invalid option. Please select a number from 1 to 10."
+            "Invalid option. Please select a number from 1 to 11."
         )
 
 
@@ -358,9 +412,12 @@ def main_menu():
             handle_verify_evidence()
 
         elif choice == "8":
-            handle_status()
+            handle_verify_report()
 
         elif choice == "9":
+            handle_status()
+
+        elif choice == "10":
             result = get_latest_report()
 
             if result is None:
@@ -383,7 +440,7 @@ def main_menu():
                 print(f"Modified   : {summary.get('modified', 0)}")
                 print(f"Unchanged  : {summary.get('unchanged', 0)}")
 
-        elif choice == "10":
+        elif choice == "11":
             print_success("Exiting SentinelTrace.")
             break
 

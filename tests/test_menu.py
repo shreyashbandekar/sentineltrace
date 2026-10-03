@@ -49,3 +49,50 @@ def test_handle_verify_evidence_no_files(monkeypatch, capsys):
     output = capsys.readouterr().out
 
     assert "No evidence files found." in output
+
+def test_handle_verify_report_verified(monkeypatch, capsys):
+    report_file = Path("reports/report_20261002_003939.json")
+
+    monkeypatch.setattr(
+        menu,
+        "get_verifiable_report_files",
+        lambda: [report_file],
+    )
+
+    monkeypatch.setattr(
+        "builtins.input",
+        lambda _: "1",
+    )
+
+    monkeypatch.setattr(
+        menu,
+        "verify_report",
+        lambda _: {
+            "success": True,
+            "file": str(report_file),
+            "hash_file": f"{report_file}.sha256",
+            "expected_hash": "a" * 64,
+            "actual_hash": "a" * 64,
+        },
+    )
+
+    menu.handle_verify_report()
+
+    output = capsys.readouterr().out
+
+    assert "REPORT INTEGRITY" in output
+    assert "Report integrity verified." in output
+
+
+def test_handle_verify_report_no_files(monkeypatch, capsys):
+    monkeypatch.setattr(
+        menu,
+        "get_verifiable_report_files",
+        lambda: [],
+    )
+
+    menu.handle_verify_report()
+
+    output = capsys.readouterr().out
+
+    assert "No report files found." in output
