@@ -14,10 +14,9 @@ env/
 # Generated audit data
 baseline/*.json
 baseline/*.sha256
-snapshots/*.json
-reports/*.json
-reports/*.txt
-logs/*
+snapshots/
+reports/
+logs/
 
 # Local/generated files
 *.log
